@@ -13,9 +13,16 @@
         android:textStyle="bold"
         android:paddingBottom="8dp" />
 
+    <Button
+        android:id="@+id/btnAdicionar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Adicionar compromisso" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCompromissos"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:paddingTop="8dp" />
 
 </LinearLayout>
