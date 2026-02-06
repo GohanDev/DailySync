@@ -23,3 +23,4 @@ class MainActivity : AppCompatActivity() {
         recycler.adapter = CompromissoAdapter(compromissos)
     }
 }
+
