@@ -1,7 +1,7 @@
 # DailySync
 
 ## Descrição
-O **DailySync** é uma aplicação Android desenvolvida no âmbito da unidade curricular, com o objetivo de permitir ao utilizador gerir compromissos diários de forma simples e intuitiva.
+O **DailySync** é uma aplicação Android desenvolvida no âmbito da unidade curricular de Desenvolvimento de Aplicações Móveis, com o objetivo de permitir ao utilizador gerir compromissos diários de forma simples e intuitiva.
 
 A aplicação possibilita a criação, visualização e persistência de compromissos, garantindo que os dados permanecem guardados entre execuções da aplicação.
 
@@ -37,14 +37,8 @@ A aplicação possibilita a criação, visualização e persistência de comprom
   Adapter utilizado para apresentar os compromissos numa `RecyclerView`.
 
 ---
-
 ## Armazenamento de Dados
 Os compromissos são guardados localmente utilizando **SharedPreferences**, sendo convertidos para JSON através da biblioteca **Gson**.
-
----
-
-## Objetivo Académico
-Este projeto foi desenvolvido com fins académicos, cumprindo os requisitos definidos no enunciado fornecido pelo docente.
 
 ---
 
