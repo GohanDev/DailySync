@@ -1,21 +1,15 @@
 package pt.ipt.dailysync
 
-import android.content.Context
 import android.os.Bundle
 import android.widget.Button
-import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 
 class MainActivity : AppCompatActivity() {
 
-    private val compromissos = mutableListOf<Compromisso>()
+    private lateinit var lista: MutableList<Compromisso>
     private lateinit var adapter: CompromissoAdapter
-    private val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,54 +18,27 @@ class MainActivity : AppCompatActivity() {
         val recycler = findViewById<RecyclerView>(R.id.recyclerCompromissos)
         val btnAdicionar = findViewById<Button>(R.id.btnAdicionar)
 
-        carregarCompromissos()
+        lista = mutableListOf(
+            Compromisso(1, "Aula de DAM", "Android Studio", "08/02/2026"),
+            Compromisso(2, "Reunião de Projeto", "Trabalho API", "09/02/2026")
+        )
 
-        adapter = CompromissoAdapter(compromissos)
+        adapter = CompromissoAdapter(lista)
+
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
 
         btnAdicionar.setOnClickListener {
-            mostrarDialogAdicionar()
-        }
-    }
-
-    private fun mostrarDialogAdicionar() {
-        val layout = layoutInflater.inflate(R.layout.dialog_adicionar, null)
-
-        val etTitulo = layout.findViewById<EditText>(R.id.etTitulo)
-        val etData = layout.findViewById<EditText>(R.id.etData)
-
-        AlertDialog.Builder(this)
-            .setTitle("Novo compromisso")
-            .setView(layout)
-            .setPositiveButton("Adicionar") { _, _ ->
-                val titulo = etTitulo.text.toString()
-                val data = etData.text.toString()
-
-                if (titulo.isNotEmpty() && data.isNotEmpty()) {
-                    compromissos.add(Compromisso(titulo, data))
-                    adapter.notifyItemInserted(compromissos.size - 1)
-                    guardarCompromissos()
-                }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    private fun guardarCompromissos() {
-        val prefs = getSharedPreferences("dailysync_prefs", Context.MODE_PRIVATE)
-        val json = gson.toJson(compromissos)
-        prefs.edit().putString("lista_compromissos", json).apply()
-    }
-
-    private fun carregarCompromissos() {
-        val prefs = getSharedPreferences("dailysync_prefs", Context.MODE_PRIVATE)
-        val json = prefs.getString("lista_compromissos", null)
-
-        if (json != null) {
-            val type = object : TypeToken<MutableList<Compromisso>>() {}.type
-            val listaGuardada: MutableList<Compromisso> = gson.fromJson(json, type)
-            compromissos.addAll(listaGuardada)
+            val novoId = lista.size + 1
+            lista.add(
+                Compromisso(
+                    novoId,
+                    "Novo Compromisso $novoId",
+                    "Descrição automática",
+                    "10/02/2026"
+                )
+            )
+            adapter.notifyDataSetChanged()
         }
     }
 }

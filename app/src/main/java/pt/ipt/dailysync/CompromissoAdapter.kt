@@ -7,12 +7,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class CompromissoAdapter(
-    private val lista: List<Compromisso>
+    private val lista: MutableList<Compromisso>
 ) : RecyclerView.Adapter<CompromissoAdapter.ViewHolder>() {
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val txtTitulo: TextView = itemView.findViewById(R.id.txtTitulo)
-        val txtData: TextView = itemView.findViewById(R.id.txtData)
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val titulo: TextView = view.findViewById(R.id.tvTitulo)
+        val descricao: TextView = view.findViewById(R.id.tvDescricao)
+        val data: TextView = view.findViewById(R.id.tvData)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -23,8 +24,9 @@ class CompromissoAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val compromisso = lista[position]
-        holder.txtTitulo.text = compromisso.titulo
-        holder.txtData.text = compromisso.data
+        holder.titulo.text = compromisso.titulo
+        holder.descricao.text = compromisso.descricao
+        holder.data.text = compromisso.data
     }
 
     override fun getItemCount(): Int = lista.size
