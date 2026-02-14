@@ -14,6 +14,12 @@ interface ApiService {
     @POST("compromissos")
     fun adicionarCompromisso(@Body compromisso: CompromissoRequest): Call<Compromisso>
 
+    @PUT("compromissos/{id}")
+    fun editarCompromisso(
+        @Path("id") id: Int,
+        @Body compromisso: CompromissoRequest
+    ): Call<Compromisso>
+
     @DELETE("compromissos/{id}")
     fun eliminarCompromisso(@Path("id") id: Int): Call<Void>
 }

@@ -2,7 +2,8 @@ package pt.ipt.dailysync
 
 data class Compromisso(
     val id: Int,
-    var titulo: String,
-    var descricao: String,
-    var data: String
+    val titulo: String,
+    val descricao: String,
+    val data: String,
+    val localizacao: String?
 )

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <EditText
+        android:id="@+id/editTitulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Título" />
+
+    <EditText
+        android:id="@+id/editDescricao"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Descrição"
+        android:layout_marginTop="12dp"/>
+
+    <EditText
+        android:id="@+id/editData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Selecionar Data"
+        android:focusable="false"
+        android:clickable="true"
+        android:layout_marginTop="12dp"/>
+
+    <EditText
+        android:id="@+id/editLocalizacao"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Localização GPS (opcional)"
+        android:layout_marginTop="12dp"
+        android:focusable="false"
+        android:clickable="false"/>
+
+    <Button
+        android:id="@+id/btnGPS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Obter Localização GPS"
+        android:layout_marginTop="12dp"/>
+</LinearLayout>

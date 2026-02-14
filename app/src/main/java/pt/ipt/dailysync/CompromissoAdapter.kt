@@ -8,31 +8,39 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class CompromissoAdapter(
-    private val lista: MutableList<Compromisso>,
-    private val onDeleteClick: (Int) -> Unit
-) : RecyclerView.Adapter<CompromissoAdapter.ViewHolder>() {
+    private val lista: List<Compromisso>,
+    private val onDelete: (Int) -> Unit,
+    private val onEdit: (Int) -> Unit
+) : RecyclerView.Adapter<CompromissoAdapter.CompromissoViewHolder>() {
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val titulo: TextView = view.findViewById(R.id.tvTitulo)
-        val descricao: TextView = view.findViewById(R.id.tvDescricao)
-        val data: TextView = view.findViewById(R.id.tvData)
-        val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
+    class CompromissoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val titulo: TextView = itemView.findViewById(R.id.textTitulo)
+        val descricao: TextView = itemView.findViewById(R.id.textDescricao)
+        val data: TextView = itemView.findViewById(R.id.textData)
+        val localizacao: TextView = itemView.findViewById(R.id.textLocalizacao)
+        val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CompromissoViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_compromisso, parent, false)
-        return ViewHolder(view)
+        return CompromissoViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: CompromissoViewHolder, position: Int) {
         val compromisso = lista[position]
+
         holder.titulo.text = compromisso.titulo
         holder.descricao.text = compromisso.descricao
         holder.data.text = compromisso.data
+        holder.localizacao.text = compromisso.localizacao ?: ""
 
         holder.btnDelete.setOnClickListener {
-            onDeleteClick(position)
+            onDelete(position)
+        }
+
+        holder.itemView.setOnClickListener {
+            onEdit(position)
         }
     }
 
