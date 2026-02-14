@@ -7,6 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,44 +23,64 @@ class MainActivity : AppCompatActivity() {
         val recycler = findViewById<RecyclerView>(R.id.recyclerCompromissos)
         val fab = findViewById<FloatingActionButton>(R.id.fabAdicionar)
 
-        lista = mutableListOf(
-            Compromisso(1, "Aula de DAM", "Android Studio", "08/02/2026"),
-            Compromisso(2, "Reunião de Projeto", "Trabalho API", "09/02/2026")
-        )
-
-        adapter = CompromissoAdapter(lista,
-            onDeleteClick = { position ->
-                confirmarRemocao(position)
-            }
-        )
+        lista = mutableListOf()
+        adapter = CompromissoAdapter(lista) { position ->
+            confirmarRemocao(lista[position].id)
+        }
 
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
 
+        carregarCompromissos()
+
         fab.setOnClickListener {
-            val novoId = lista.size + 1
-            lista.add(
-                Compromisso(
-                    novoId,
-                    "Novo Compromisso $novoId",
-                    "Descrição automática",
-                    "10/02/2026"
-                )
-            )
-            adapter.notifyDataSetChanged()
+            Toast.makeText(this, "Adicionar ainda não implementado na API", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun confirmarRemocao(position: Int) {
+    private fun carregarCompromissos() {
+        RetrofitClient.instance.getCompromissos()
+            .enqueue(object : Callback<List<Compromisso>> {
+                override fun onResponse(
+                    call: Call<List<Compromisso>>,
+                    response: Response<List<Compromisso>>
+                ) {
+                    if (response.isSuccessful) {
+                        lista.clear()
+                        lista.addAll(response.body() ?: emptyList())
+                        adapter.notifyDataSetChanged()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Erro ao carregar dados", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<List<Compromisso>>, t: Throwable) {
+                    Toast.makeText(this@MainActivity, "Falha na ligação à API", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+
+    private fun confirmarRemocao(id: Int) {
         AlertDialog.Builder(this)
             .setTitle("Eliminar compromisso")
             .setMessage("Tem a certeza que deseja eliminar?")
             .setPositiveButton("Sim") { _, _ ->
-                lista.removeAt(position)
-                adapter.notifyDataSetChanged()
-                Toast.makeText(this, "Compromisso eliminado", Toast.LENGTH_SHORT).show()
+                eliminarCompromisso(id)
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun eliminarCompromisso(id: Int) {
+        RetrofitClient.instance.eliminarCompromisso(id)
+            .enqueue(object : Callback<Void> {
+                override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                    carregarCompromissos()
+                }
+
+                override fun onFailure(call: Call<Void>, t: Throwable) {
+                    Toast.makeText(this@MainActivity, "Erro ao eliminar", Toast.LENGTH_SHORT).show()
+                }
+            })
     }
 }
