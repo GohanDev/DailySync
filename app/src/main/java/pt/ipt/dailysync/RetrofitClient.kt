@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "https://1b37-2001-8a0-f33f-3d00-b76d-3553-6505-2f33.ngrok-free.app/"
+    private const val BASE_URL = "https://dailysync-api.onrender.com/"
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
