@@ -18,7 +18,7 @@ Aplicação Android desenvolvida no âmbito da disciplina de Desenvolvimento de 
 - Render (deploy da API)
 
 ## API
-https://dailysync-api.onrender.com/
+https://dailysync-api.onrender.com/compromissos
 
 ## Autor
 Bruno Alves
