@@ -4,15 +4,13 @@ import android.Manifest
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.LocationServices
@@ -21,230 +19,206 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var lista: MutableList<Compromisso>
+    private lateinit var recycler: RecyclerView
     private lateinit var adapter: CompromissoAdapter
+    private val lista = mutableListOf<Compromisso>()
 
-    private val LOCATION_REQ_CODE = 1001
+    private val api: ApiService by lazy { RetrofitClient.api }
 
-    // Para guardar referência ao EditText da localização do dialog aberto
-    private var currentLocalizacaoEdit: EditText? = null
+    private val fusedLocationClient by lazy {
+        LocationServices.getFusedLocationProviderClient(this)
+    }
+
+    private val pedirPermissaoLocalizacao =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) toast("Permissão de localização negada.")
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val recycler = findViewById<RecyclerView>(R.id.recyclerCompromissos)
-        val fab = findViewById<FloatingActionButton>(R.id.fabAdicionar)
-        val btnSobre = findViewById<Button>(R.id.btnSobre)
-
-        lista = mutableListOf()
+        recycler = findViewById(R.id.recyclerCompromissos)
+        recycler.layoutManager = LinearLayoutManager(this)
 
         adapter = CompromissoAdapter(
             lista,
-            onDelete = { position -> eliminarCompromisso(lista[position].id) },
-            onEdit = { position -> mostrarDialogEditar(lista[position]) }
+            onDelete = { comp -> confirmarApagar(comp) },
+            onEdit = { comp -> abrirDialogCompromisso(comp) }
         )
-
-        recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
 
-        carregarCompromissos()
+        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener {
+            abrirDialogCompromisso(null)
+        }
 
-        fab.setOnClickListener { mostrarDialogAdicionar() }
-
-        btnSobre.setOnClickListener {
+        findViewById<Button>(R.id.btnSobre).setOnClickListener {
             startActivity(Intent(this, AboutActivity::class.java))
         }
+
+        carregarLista()
     }
 
-    private fun carregarCompromissos() {
-        RetrofitClient.instance.getCompromissos()
-            .enqueue(object : Callback<List<Compromisso>> {
-                override fun onResponse(call: Call<List<Compromisso>>, response: Response<List<Compromisso>>) {
-                    if (response.isSuccessful) {
-                        lista.clear()
-                        lista.addAll(response.body() ?: emptyList())
-                        adapter.notifyDataSetChanged()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Erro ao carregar (API)", Toast.LENGTH_SHORT).show()
-                    }
+    private fun carregarLista() {
+        api.getCompromissos().enqueue(object : Callback<List<Compromisso>> {
+            override fun onResponse(
+                call: Call<List<Compromisso>>,
+                response: Response<List<Compromisso>>
+            ) {
+                if (response.isSuccessful) {
+                    lista.clear()
+                    lista.addAll(response.body() ?: emptyList())
+                    adapter.notifyDataSetChanged()
+                } else {
+                    toast("Erro a carregar (${response.code()})")
                 }
+            }
 
-                override fun onFailure(call: Call<List<Compromisso>>, t: Throwable) {
-                    Toast.makeText(this@MainActivity, "Falha na ligação à API", Toast.LENGTH_SHORT).show()
-                }
-            })
+            override fun onFailure(call: Call<List<Compromisso>>, t: Throwable) {
+                toast("Falha de rede: ${t.message}")
+            }
+        })
     }
 
-    private fun mostrarDialogAdicionar() {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_compromisso, null)
+    private fun abrirDialogCompromisso(compromisso: Compromisso?) {
+        val v = layoutInflater.inflate(R.layout.dialog_compromisso, null)
 
-        val editTitulo = view.findViewById<EditText>(R.id.editTitulo)
-        val editDescricao = view.findViewById<EditText>(R.id.editDescricao)
-        val editData = view.findViewById<EditText>(R.id.editData)
-        val editLocalizacao = view.findViewById<EditText>(R.id.editLocalizacao)
-        val btnGPS = view.findViewById<Button>(R.id.btnGPS)
+        val txtTituloDialog = v.findViewById<TextView>(R.id.txtTituloDialog)
+        val editTitulo = v.findViewById<EditText>(R.id.editTitulo)
+        val editDescricao = v.findViewById<EditText>(R.id.editDescricao)
+        val editData = v.findViewById<EditText>(R.id.editData)
+        val editLocalizacao = v.findViewById<EditText>(R.id.editLocalizacao)
+        val btnGPS = v.findViewById<Button>(R.id.btnGPS)
 
-        configurarDatePicker(editData)
+        val isEditar = compromisso != null
+        txtTituloDialog.text = if (isEditar) "Editar Compromisso" else "Adicionar Compromisso"
 
-        btnGPS.setOnClickListener {
-            currentLocalizacaoEdit = editLocalizacao
-            obterLocalizacaoGPS()
+        if (isEditar) {
+            editTitulo.setText(compromisso!!.titulo)
+            editDescricao.setText(compromisso.descricao)
+            editData.setText(compromisso.data)
+            editLocalizacao.setText(compromisso.localizacao ?: "")
         }
 
-        AlertDialog.Builder(this)
-            .setTitle("Adicionar Compromisso")
-            .setView(view)
-            .setPositiveButton("Guardar") { _, _ ->
-                val titulo = editTitulo.text.toString().trim()
-                val desc = editDescricao.text.toString().trim()
-                val data = editData.text.toString().trim()
-                val loc = editLocalizacao.text.toString().trim().ifEmpty { null }
-
-                if (titulo.isEmpty() || desc.isEmpty() || data.isEmpty()) {
-                    Toast.makeText(this, "Preenche Título, Descrição e Data", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                val request = CompromissoRequest(titulo, desc, data, loc)
-
-                RetrofitClient.instance.adicionarCompromisso(request)
-                    .enqueue(object : Callback<Compromisso> {
-                        override fun onResponse(call: Call<Compromisso>, response: Response<Compromisso>) {
-                            if (response.isSuccessful) carregarCompromissos()
-                            else Toast.makeText(this@MainActivity, "Erro a gravar (API)", Toast.LENGTH_SHORT).show()
-                        }
-
-                        override fun onFailure(call: Call<Compromisso>, t: Throwable) {
-                            Toast.makeText(this@MainActivity, "Erro de rede ao gravar", Toast.LENGTH_SHORT).show()
-                        }
-                    })
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    private fun mostrarDialogEditar(compromisso: Compromisso) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_compromisso, null)
-
-        val editTitulo = view.findViewById<EditText>(R.id.editTitulo)
-        val editDescricao = view.findViewById<EditText>(R.id.editDescricao)
-        val editData = view.findViewById<EditText>(R.id.editData)
-        val editLocalizacao = view.findViewById<EditText>(R.id.editLocalizacao)
-        val btnGPS = view.findViewById<Button>(R.id.btnGPS)
-
-        editTitulo.setText(compromisso.titulo)
-        editDescricao.setText(compromisso.descricao)
-        editData.setText(compromisso.data)
-        editLocalizacao.setText(compromisso.localizacao ?: "")
-
-        configurarDatePicker(editData)
-
-        btnGPS.setOnClickListener {
-            currentLocalizacaoEdit = editLocalizacao
-            obterLocalizacaoGPS()
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Editar Compromisso")
-            .setView(view)
-            .setPositiveButton("Guardar") { _, _ ->
-                val titulo = editTitulo.text.toString().trim()
-                val desc = editDescricao.text.toString().trim()
-                val data = editData.text.toString().trim()
-                val loc = editLocalizacao.text.toString().trim().ifEmpty { null }
-
-                if (titulo.isEmpty() || desc.isEmpty() || data.isEmpty()) {
-                    Toast.makeText(this, "Preenche Título, Descrição e Data", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                val request = CompromissoRequest(titulo, desc, data, loc)
-
-                RetrofitClient.instance.editarCompromisso(compromisso.id, request)
-                    .enqueue(object : Callback<Compromisso> {
-                        override fun onResponse(call: Call<Compromisso>, response: Response<Compromisso>) {
-                            if (response.isSuccessful) carregarCompromissos()
-                            else Toast.makeText(this@MainActivity, "Erro a editar (API)", Toast.LENGTH_SHORT).show()
-                        }
-
-                        override fun onFailure(call: Call<Compromisso>, t: Throwable) {
-                            Toast.makeText(this@MainActivity, "Erro de rede ao editar", Toast.LENGTH_SHORT).show()
-                        }
-                    })
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    private fun configurarDatePicker(editText: EditText) {
-        editText.setOnClickListener {
-            val calendar = Calendar.getInstance()
+        editData.setOnClickListener {
+            val cal = Calendar.getInstance()
             DatePickerDialog(
                 this,
                 { _, year, month, day ->
-                    editText.setText("$day/${month + 1}/$year")
+                    val mm = month + 1
+                    editData.setText(String.format(Locale.getDefault(), "%02d/%02d/%04d", day, mm, year))
                 },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
             ).show()
         }
-    }
 
-    private fun eliminarCompromisso(id: Int) {
-        RetrofitClient.instance.eliminarCompromisso(id)
-            .enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    carregarCompromissos()
+        btnGPS.setOnClickListener {
+            obterLocalizacaoAtual { loc ->
+                editLocalizacao.setText("${loc.latitude}, ${loc.longitude}")
+                editLocalizacao.setSelection(editLocalizacao.text.length)
+            }
+        }
+
+        AlertDialog.Builder(this)
+            .setView(v)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Guardar") { _, _ ->
+                val titulo = editTitulo.text.toString().trim()
+                val descricao = editDescricao.text.toString().trim()
+                val data = editData.text.toString().trim()
+                val localizacao = editLocalizacao.text.toString().trim()
+
+                if (titulo.isEmpty() || descricao.isEmpty() || data.isEmpty()) {
+                    toast("Preenche título, descrição e data.")
+                    return@setPositiveButton
                 }
 
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    Toast.makeText(this@MainActivity, "Erro ao eliminar", Toast.LENGTH_SHORT).show()
-                }
-            })
+                val req = CompromissoRequest(titulo, descricao, data, localizacao)
+
+                if (isEditar) atualizar(compromisso!!.id, req)
+                else adicionar(req)
+            }
+            .show()
     }
 
-    // ===== GPS =====
-    private fun obterLocalizacaoGPS() {
-        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+    private fun adicionar(req: CompromissoRequest) {
+        api.addCompromisso(req).enqueue(object : Callback<Compromisso> {
+            override fun onResponse(call: Call<Compromisso>, response: Response<Compromisso>) {
+                if (response.isSuccessful) {
+                    toast("Compromisso adicionado!")
+                    carregarLista()
+                } else toast("Erro ao adicionar (${response.code()})")
+            }
 
-        if (fine != PackageManager.PERMISSION_GRANTED && coarse != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                LOCATION_REQ_CODE
-            )
+            override fun onFailure(call: Call<Compromisso>, t: Throwable) {
+                toast("Falha de rede: ${t.message}")
+            }
+        })
+    }
+
+    private fun atualizar(id: Int, req: CompromissoRequest) {
+        api.updateCompromisso(id, req).enqueue(object : Callback<Compromisso> {
+            override fun onResponse(call: Call<Compromisso>, response: Response<Compromisso>) {
+                if (response.isSuccessful) {
+                    toast("Compromisso atualizado!")
+                    carregarLista()
+                } else toast("Erro ao editar (${response.code()})")
+            }
+
+            override fun onFailure(call: Call<Compromisso>, t: Throwable) {
+                toast("Falha de rede: ${t.message}")
+            }
+        })
+    }
+
+    private fun confirmarApagar(comp: Compromisso) {
+        AlertDialog.Builder(this)
+            .setTitle("Apagar")
+            .setMessage("Queres apagar \"${comp.titulo}\"?")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Apagar") { _, _ -> apagar(comp.id) }
+            .show()
+    }
+
+    private fun apagar(id: Int) {
+        api.deleteCompromisso(id).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    toast("Compromisso apagado!")
+                    carregarLista()
+                } else toast("Erro ao apagar (${response.code()})")
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                toast("Falha de rede: ${t.message}")
+            }
+        })
+    }
+
+    private fun obterLocalizacaoAtual(onOk: (Location) -> Unit) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            pedirPermissaoLocalizacao.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             return
         }
 
-        val fused = LocationServices.getFusedLocationProviderClient(this)
-        fused.lastLocation
+        fusedLocationClient.lastLocation
             .addOnSuccessListener { loc ->
-                if (loc != null) {
-                    val texto = "${loc.latitude}, ${loc.longitude}"
-                    currentLocalizacaoEdit?.setText(texto)
-                } else {
-                    Toast.makeText(this, "Sem localização (ativa o GPS / define no emulador)", Toast.LENGTH_SHORT).show()
-                }
+                if (loc != null) onOk(loc) else toast("Não foi possível obter localização.")
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao obter GPS", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                toast("Erro GPS: ${e.message}")
             }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_REQ_CODE) {
-            if (grantResults.isNotEmpty() && grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
-                obterLocalizacaoGPS()
-            } else {
-                Toast.makeText(this, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
-            }
-        }
+    private fun toast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 }

@@ -1,25 +1,24 @@
 package pt.ipt.dailysync
 
 import retrofit2.Call
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface ApiService {
-
-    @POST("login")
-    fun login(@Body request: LoginRequest): Call<LoginResponse>
 
     @GET("compromissos")
     fun getCompromissos(): Call<List<Compromisso>>
 
     @POST("compromissos")
-    fun adicionarCompromisso(@Body compromisso: CompromissoRequest): Call<Compromisso>
+    fun addCompromisso(@Body body: CompromissoRequest): Call<Compromisso>
 
     @PUT("compromissos/{id}")
-    fun editarCompromisso(
-        @Path("id") id: Int,
-        @Body compromisso: CompromissoRequest
-    ): Call<Compromisso>
+    fun updateCompromisso(@Path("id") id: Int, @Body body: CompromissoRequest): Call<Compromisso>
 
     @DELETE("compromissos/{id}")
-    fun eliminarCompromisso(@Path("id") id: Int): Call<Void>
+    fun deleteCompromisso(@Path("id") id: Int): Call<Void>
 }
