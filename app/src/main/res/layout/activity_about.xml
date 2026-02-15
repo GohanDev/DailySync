@@ -2,77 +2,43 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:padding="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_gravity="center_horizontal"
-            android:src="@drawable/logo_dailysync"
-            android:background="@color/black"
-            android:contentDescription="@string/app_name"
-            android:layout_marginBottom="16dp"/>
-
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/textCurso"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Curso / Disciplina / Ano letivo"
-            android:textStyle="bold"
             android:textSize="18sp"
-            android:layout_marginBottom="8dp"/>
+            android:textStyle="bold" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/textDisciplina"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Curso: Engenharia Informática\nDisciplina: Desenvolvimento de Aplicações Móveis\nAno letivo: 2025/2026"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginTop="8dp" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/textAno"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Autor"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginTop="8dp" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/textAutor"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nº: 24706\nNome: Bruno Alves\n"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginTop="16dp" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/textTecnologias"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tecnologias / Bibliotecas"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="- Retrofit (HTTP client)\n- Gson Converter (JSON)\n- Material Components (UI)\n- RecyclerView (lista)\n- Fused Location Provider (GPS)\n- Node.js + Express (API REST)\n- ngrok (túnel HTTPS)"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Código de terceiros / Fontes"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Bibliotecas obtidas via Gradle (Maven Central / Google): Retrofit, Gson, Material, Google Play Services Location.\n\nAPI REST desenvolvida pelo autor. Logo criado para o projeto."
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
 </ScrollView>
